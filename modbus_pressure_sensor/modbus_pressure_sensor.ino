@@ -13,7 +13,19 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  Serial.println("_____________Sensor values are displayed below:___________");
+  //Serial.println("_____________Sensor values are displayed below:___________");
+  Serial.println("Debugging connection: ");
+  int u = get_reg(63);
+  Serial.print("Test: Holding reg 63 value = ");
+  Serial.println(u);
+
+  int e = ControllinoModbusMaster.getLastError();
+
+  if (e==255){Serial.println("Error: Time-out, no response from slave");}
+  else if (e==1){Serial.println("Error: Function code not available");}
+  else if (e==2){Serial.println("Error: Address beyond available space for Modbus registers ");}
+  else if (e==3){Serial.println("Error: Coils or registers number beyond the available space");}
+  else {Serial.println("No error message in communication");}
   delay(1000);
 }
 
@@ -22,7 +34,7 @@ void loop() {
   //display_diff_pressure();
   //display_static_pressure();
   //display_process_temp();
-  display_sensor_temp();
+  //display_sensor_temp();
 }
 
 
