@@ -15,17 +15,23 @@ void setup() {
 
   //Serial.println("_____________Sensor values are displayed below:___________");
   Serial.println("Debugging connection: ");
+  
   int u = get_reg(63);
-  Serial.print("Test: Holding reg 63 value = ");
+  Serial.print("Test1: Holding reg 63 current value = ");
   Serial.println(u);
-
+  Serial.println("Test2: writing value 20 to Holding reg 63");
+  set_reg(63,20);
+  u = get_reg(63);
+  Serial.print("Holding reg 63 changed value =");
+  Serial.println(u);
+  
   int e = ControllinoModbusMaster.getLastError();
 
   if (e==255){Serial.println("Error: Time-out, no response from slave");}
   else if (e==1){Serial.println("Error: Function code not available");}
   else if (e==2){Serial.println("Error: Address beyond available space for Modbus registers ");}
   else if (e==3){Serial.println("Error: Coils or registers number beyond the available space");}
-  else {Serial.println("No error message in communication");}
+  else {Serial.println("No error in communication");}
   delay(1000);
 }
 
