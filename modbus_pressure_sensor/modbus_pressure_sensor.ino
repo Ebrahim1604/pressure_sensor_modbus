@@ -34,8 +34,8 @@ void display_sensor_temp(void)
         uint16_t bytes[2];
     }floatConverter;
     
-    floatConverter.bytes[0]= get_reg(399); 
-    floatConverter.bytes[1]= get_reg(400);
+    floatConverter.bytes[0]= get_reg(400); 
+    floatConverter.bytes[1]= get_reg(399);
   
     float fo = floatConverter.floatVal;
     Serial.print("Sensor module temp = ");
@@ -48,10 +48,15 @@ void display_sensor_temp(void)
       Serial.println(" degree C");
     }
     
-    else
+    else if (u == 21)
     {
       Serial.println(" degree F");
     }
+
+    else
+    {
+      Serial.println("Unknown units");
+     }
 
 }
 
