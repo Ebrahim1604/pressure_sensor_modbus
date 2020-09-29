@@ -13,7 +13,8 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  //Serial.println("_____________Sensor values are displayed below:___________");
+  Serial.println("_____________Sensor values are displayed below:___________");
+ /*
   Serial.println("Debugging connection: ");
   
   int u = get_reg(63);
@@ -32,7 +33,9 @@ void setup() {
   else if (e==2){Serial.println("Error: Address beyond available space for Modbus registers ");}
   else if (e==3){Serial.println("Error: Coils or registers number beyond the available space");}
   else {Serial.println("No error in communication");}
-  delay(1000);
+  */
+  delay(4000);
+  display_sensor_temp();
 }
 
 void loop() {
@@ -55,8 +58,13 @@ void display_sensor_temp(void)
     floatConverter.bytes[0]= get_reg(400); 
     floatConverter.bytes[1]= get_reg(399);
   
+    Serial.print("1st word = ");
+    Serial.print(floatConverter.bytes[0]);
+    Serial.print(" 2nd word = ");
+    Serial.println(floatConverter.bytes[1]);
+    
     float fo = floatConverter.floatVal;
-    Serial.print("Sensor module temp = ");
+    Serial.print("floating val = ");
     Serial.print(fo);
     
     int u = get_reg(63);
