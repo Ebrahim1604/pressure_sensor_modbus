@@ -58,9 +58,9 @@ void display_sensor_temp(void)
     floatConverter.bytes[0]= get_reg(400); 
     floatConverter.bytes[1]= get_reg(399);
   
-    Serial.print("1st word = ");
+    Serial.print("1st word (400) = ");
     Serial.print(floatConverter.bytes[0]);
-    Serial.print(" 2nd word = ");
+    Serial.print(" 2nd word (399) = ");
     Serial.println(floatConverter.bytes[1]);
     
     float fo = floatConverter.floatVal;
