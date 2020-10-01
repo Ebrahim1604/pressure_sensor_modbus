@@ -51,19 +51,19 @@ void display_sensor_temp(void)
 {
   union
     {
-        float floatVal;
+        double floatVal;
         uint16_t bytes[2];
     }floatConverter;
     
     floatConverter.bytes[0]= get_reg(399); 
     floatConverter.bytes[1]= get_reg(400);
   
-    Serial.print("1st word (399)= ");
+    Serial.print("1st word (399) = ");
     Serial.print(floatConverter.bytes[0]);
-    Serial.print(" 2nd word (400) = ");
+    Serial.print(" 2nd word (400)= ");
     Serial.println(floatConverter.bytes[1]);
     
-    float fo = floatConverter.floatVal;
+    double fo = floatConverter.floatVal;
     Serial.print("floating val = ");
     Serial.print(fo);
     
@@ -93,7 +93,7 @@ int get_reg(uint16_t addr)
   
   ModbusQuery[0].u8id = SlaveModbusAdd;
   ModbusQuery[0].u8fct = 3;
-  ModbusQuery[0].u16RegAdd = addr;
+  ModbusQuery[0].u16RegAdd = addr - 1;
   ModbusQuery[0].u16CoilsNo = 1;
   ModbusQuery[0].au16reg = curr_reg_val;
 
@@ -126,7 +126,7 @@ void set_reg(uint16_t addr, int reg_val)
   
   ModbusQuery[1].u8id = SlaveModbusAdd;
   ModbusQuery[1].u8fct = 6;
-  ModbusQuery[1].u16RegAdd = addr;
+  ModbusQuery[1].u16RegAdd = addr - 1;
   ModbusQuery[1].u16CoilsNo = 1;
   ModbusQuery[1].au16reg = req_reg_val;
   req_reg_val[0] = reg_val;
