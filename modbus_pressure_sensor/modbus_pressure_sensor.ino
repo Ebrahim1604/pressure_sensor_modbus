@@ -35,15 +35,14 @@ void setup() {
   else {Serial.println("No error in communication");}
   */
   delay(4000);
-  display_sensor_temp();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //display_diff_pressure();
-  //display_static_pressure();
-  //display_process_temp();
-  //display_sensor_temp();
+  display_diff_pressure();
+  display_static_pressure();
+  display_process_temp();
+  display_sensor_temp();
 }
 
 
@@ -58,13 +57,15 @@ void display_sensor_temp(void)
     floatConverter.bytes[0]= get_reg(400); 
     floatConverter.bytes[1]= get_reg(399);
   
-    Serial.print("1st word (400) = ");
+    /*
+    Serial.print("1st word = ");
     Serial.print(floatConverter.bytes[0]);
-    Serial.print(" 2nd word (399)= ");
+    Serial.print(" 2nd word = ");
     Serial.println(floatConverter.bytes[1]);
+    */
     
     double fo = floatConverter.floatVal;
-    Serial.print("floating val = ");
+    Serial.print("Sensor Module temp = ");
     Serial.print(fo);
     
     int u = get_reg(63);
@@ -86,6 +87,211 @@ void display_sensor_temp(void)
 
 }
 
+void display_diff_pressure()
+{
+  union
+    {
+        double floatVal;
+        uint16_t bytes[2];
+    }floatConverter;
+    
+    floatConverter.bytes[0]= get_reg(402); 
+    floatConverter.bytes[1]= get_reg(401);
+  
+    /*
+    Serial.print("1st word = ");
+    Serial.print(floatConverter.bytes[0]);
+    Serial.print(" 2nd word = ");
+    Serial.println(floatConverter.bytes[1]);
+    */
+    
+    double fo = floatConverter.floatVal;
+    Serial.print("diff pressure = ");
+    Serial.print(fo);
+    
+    int u = get_reg(60);
+
+    if (u == 1)
+    {Serial.println(" inh20 @60F"); }
+
+    else if (u == 2)
+    {Serial.println(" Pa"); }
+
+    else if(u == 3)
+    {Serial.println(" KPa"); }
+
+    else if(u == 4)
+    {Serial.println(" MPa"); }
+
+    else if(u == 5)
+    {Serial.println(" psi"); }
+
+    else if(u == 6)
+    {Serial.println(" inh20 @68F"); }
+
+    else if(u == 7)
+    {Serial.println(" bar"); }
+
+    else if(u == 8)
+    {Serial.println(" mbar"); }
+
+    else if(u == 9)
+    {Serial.println(" g/cm2"); }
+
+    else if (u == 10)
+    {Serial.println(" kg/cm2"); }
+
+    else if (u == 11)
+    {Serial.println(" inHg"); }
+
+    else if(u == 12)
+    {Serial.println(" fth20"); }
+
+    else if(u == 13)
+    {Serial.println(" torr"); }
+
+    else if(u == 14)
+    {Serial.println(" atm"); }
+
+    else if(u == 15)
+    {Serial.println(" mmh20"); }
+
+    else if (u == 16)
+    {Serial.println(" mmHg"); }
+
+    else if (u == 238)
+    {Serial.println(" inh20@4C"); }
+
+    else if (u == 239)
+    {Serial.println(" mmh20@4C"); }
+
+    else
+    {Serial.println(" Unknown units"); }
+  }
+
+void display_static_pressure()
+{
+  union
+    {
+        double floatVal;
+        uint16_t bytes[2];
+    }floatConverter;
+    
+    floatConverter.bytes[0]= get_reg(404); 
+    floatConverter.bytes[1]= get_reg(403);
+  
+    /*
+    Serial.print("1st word = ");
+    Serial.print(floatConverter.bytes[0]);
+    Serial.print(" 2nd word = ");
+    Serial.println(floatConverter.bytes[1]);
+    */
+    
+    double fo = floatConverter.floatVal;
+    Serial.print("static pressure = ");
+    Serial.print(fo);
+    
+    int u = get_reg(61);
+
+    if (u == 1)
+    {Serial.println(" inh20 @60F"); }
+
+    else if (u == 2)
+    {Serial.println(" Pa"); }
+
+    else if(u == 3)
+    {Serial.println(" KPa"); }
+
+    else if(u == 4)
+    {Serial.println(" MPa"); }
+
+    else if(u == 5)
+    {Serial.println(" psi"); }
+
+    else if(u == 6)
+    {Serial.println(" inh20 @68F"); }
+
+    else if(u == 7)
+    {Serial.println(" bar"); }
+
+    else if(u == 8)
+    {Serial.println(" mbar"); }
+
+    else if(u == 9)
+    {Serial.println(" g/cm2"); }
+
+    else if (u == 10)
+    {Serial.println(" kg/cm2"); }
+
+    else if (u == 11)
+    {Serial.println(" inHg"); }
+
+    else if(u == 12)
+    {Serial.println(" fth20"); }
+
+    else if(u == 13)
+    {Serial.println(" torr"); }
+
+    else if(u == 14)
+    {Serial.println(" atm"); }
+
+    else if(u == 15)
+    {Serial.println(" mmh20"); }
+
+    else if (u == 16)
+    {Serial.println(" mmHg"); }
+
+    else if (u == 238)
+    {Serial.println(" inh20@4C"); }
+
+    else if (u == 239)
+    {Serial.println(" mmh20@4C"); }
+
+    else
+    {Serial.println(" Unknown units"); }
+
+  }
+
+void display_process_temp()
+{
+  union
+    {
+        double floatVal;
+        uint16_t bytes[2];
+    }floatConverter;
+    
+    floatConverter.bytes[0]= get_reg(406); 
+    floatConverter.bytes[1]= get_reg(405);
+  
+    /*
+    Serial.print("1st word = ");
+    Serial.print(floatConverter.bytes[0]);
+    Serial.print(" 2nd word = ");
+    Serial.println(floatConverter.bytes[1]);
+    */
+    
+    double fo = floatConverter.floatVal;
+    Serial.print("Process temp = ");
+    Serial.print(fo);
+    
+    int u = get_reg(62);
+
+    if (u == 20)
+    {
+      Serial.println(" degree C");
+    }
+    
+    else if (u == 21)
+    {
+      Serial.println(" degree F");
+    }
+
+    else
+    {
+      Serial.println("Unknown units");
+     }
+
+  }
 
 int get_reg(uint16_t addr)
 {
