@@ -41,7 +41,7 @@ void setup() {
   mb.addIreg(add_3);
   mb.addIreg(add_4);
 
-  set_timer(time_interval); // time in millisecs
+  //set_timer(time_interval); // time in millisecs
 }
 
 void loop()
@@ -63,6 +63,8 @@ void loop()
   mb.Ireg(add_2, val_2);
   mb.Ireg(add_3, val_3);
   mb.Ireg(add_4, val_4);
+
+  mb.task();
  
 }
 
