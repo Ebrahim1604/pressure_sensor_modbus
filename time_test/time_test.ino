@@ -73,7 +73,8 @@ void setup() {
   mb.Ireg(add_6, t_sg);
   mb.Ireg(add_7, t_f);
   mb.Ireg(add_8, Meter);
-  
+
+  Serial.println("wait for sometime");
   unsigned long time_start = micros();
   for(int i = 0; i<1000; i++)
   {
