@@ -29,7 +29,7 @@ unsigned long WaitingTime;
 //ModbusIP object
 ModbusIP mb;
 
-unsigned long samplerate = 9; // 600 results = 10 minutes, 9 is for testing
+unsigned long samplerate = 521; // 10 min counter
 
 #define Meter 23456 // Meter number will change
 
@@ -110,7 +110,8 @@ void calculate_parameters()
     mb.task();
   }
    
-  }
+ }
+ 
 void update_values()
 {
   f_sp = t_sp/samplerate;
@@ -120,20 +121,28 @@ void update_values()
   f_fc = t_fc/samplerate;
   f_sg = t_sg/samplerate;
   f_f = t_f/samplerate;
+
+  t_sp = 0.0;
+  t_dp = 0.0;
+  t_bc = 0.0;
+  t_c = 0.0;
+  t_fc = 0.0;
+  t_sg = 0.0;
+  t_f = 0.0;
 }
  
 float get_diff_pressure()
 {
   union
     {
-        double floatVal;
+        float floatVal;
         uint16_t bytes[2];
     }floatConverter;
     
     floatConverter.bytes[0]= get_reg(402); 
     floatConverter.bytes[1]= get_reg(401);
   
-    double fo = floatConverter.floatVal;
+    float fo = floatConverter.floatVal;
   
     return fo;
   }
@@ -143,14 +152,14 @@ float get_static_pressure()
 {
   union
     {
-        double floatVal;
+        float floatVal;
         uint16_t bytes[2];
     }floatConverter;
     
     floatConverter.bytes[0]= get_reg(404); 
     floatConverter.bytes[1]= get_reg(403);
   
-    double fo = floatConverter.floatVal;
+    float fo = floatConverter.floatVal;
   
    return fo;
   }
