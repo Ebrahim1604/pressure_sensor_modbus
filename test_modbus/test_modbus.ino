@@ -123,6 +123,16 @@ void setup() {
   gasComps[iPentane_iC5] = iPentane_iC5_v;
   gasComps[nHexane_C6] = nHexane_C6_v;
   gasComps[nHeptane_C7] = nHeptane_C7_v;
+
+  mb.Ireg(add_1, f_sp);
+  mb.Ireg(add_2, f_dp);
+  mb.Ireg(add_3, f_bc);
+  mb.Ireg(add_4, f_c);
+  mb.Ireg(add_5, f_fc);
+  mb.Ireg(add_6, f_sg);
+  mb.Ireg(add_7, f_f);
+  mb.Ireg(add_8, Meter);
+  mb.task();
 }
 
 void loop() {
