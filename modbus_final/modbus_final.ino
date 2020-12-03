@@ -165,49 +165,24 @@ void calculate_parameters()
   {
     mb.task();
     t_sp = t_sp + get_static_pressure();
-    
     mb.task();
     t_dp = t_dp + get_diff_pressure();
     mb.task();
-    Serial.print("i = ");
-    Serial.println(i);
-    Serial.print("SUmmed dp and sp values: ");
-    Serial.print(t_sp);
-    Serial.print(" ");
-    Serial.println(t_dp);
     bc = AGA3Calc(0);
+    mb.task();
     c = AGA3Calc(1);
+    mb.task();
     fc = AGA3Calc(2);
+    mb.task();
     sg = AGA3Calc(3);
+    mb.task();
     f = AGA3Calc(4);
-    Serial.print("current returned bc,c,fc,sg and f vales: ");
-    Serial.print(bc);
-    Serial.print(" ");
-    Serial.print(c);
-    Serial.print(" ");
-    Serial.print(fc);
-    Serial.print(" ");
-    Serial.print(sg);
-    Serial.print(" ");
-    Serial.print(f);
-    Serial.println(" ");
     mb.task();
     t_bc = t_bc + bc;
     t_c = t_c + c;
     t_fc = t_fc + fc;
     t_sg = t_sg + sg;
     t_f = t_f + f;
-    Serial.print("current summed bc,c,fc,sg and f vales: ");
-    Serial.print(t_bc);
-    Serial.print(" ");
-    Serial.print(t_c);
-    Serial.print(" ");
-    Serial.print(t_fc);
-    Serial.print(" ");
-    Serial.print(t_sg);
-    Serial.print(" ");
-    Serial.print(t_f);
-    Serial.println(" ");
     mb.task();
   }
    
@@ -222,22 +197,7 @@ void update_values()
   f_fc = t_fc/samplerate;
   f_sg = t_sg/samplerate;
   f_f = t_f/samplerate;
-
-  Serial.print("Averaged values: ");
-  Serial.print(f_sp);
-  Serial.print(" ");
-  Serial.print(f_dp);
-  Serial.print(" ");
-  Serial.print(f_bc);
-  Serial.print(" ");
-  Serial.print(f_c);
-  Serial.print(" ");
-  Serial.print(f_fc);
-  Serial.print(" ");
-  Serial.print(f_sg);
-  Serial.print(" ");
-  Serial.print(f_f);
-  Serial.println(" ");
+  mb.task();
   
   t_sp = 0.0;
   t_dp = 0.0;
@@ -253,14 +213,14 @@ double get_diff_pressure()
 {
   union
     {
-        double doubleVal;
+        float doubleVal;
         uint16_t bytes[2];
     }doubleConverter;
     
     doubleConverter.bytes[0]= get_reg(402); 
     doubleConverter.bytes[1]= get_reg(401);
   
-    double fo = doubleConverter.doubleVal;
+    double fo = (double)doubleConverter.doubleVal;
   
     return fo;
   }
@@ -270,14 +230,14 @@ double get_static_pressure()
 {
   union
     {
-        double doubleVal;
+        float doubleVal;
         uint16_t bytes[2];
     }doubleConverter;
     
     doubleConverter.bytes[0]= get_reg(404); 
     doubleConverter.bytes[1]= get_reg(403);
   
-    double fo = doubleConverter.doubleVal;
+    double fo = (double)doubleConverter.doubleVal;
   
    return fo;
   }
@@ -285,20 +245,21 @@ double get_static_pressure()
 double AGA3Calc(int val)
 { 
   double staticPressureKPA = get_static_pressure();
+  mb.task();
   double differentialPressureKPA = get_diff_pressure();
-  
+  mb.task();
   Aga8Result calcZResult = Aga8_CalculateZ(gasComps, UnitConverter_CELCIUStoKELVIN(flowTemperatureInCelcius), 
     UnitConverter_KPAtoPSI(staticPressureKPA));
   double FlowZCalc = calcZResult.FlowCompressiblity;
-  
+  mb.task();
   double flowCompressibility = FlowZCalc;
   double baseCompressibility = baseCompressibility_v;
   double specificGravity = specificGravity_v;
-
+  mb.task();
   Aga3Result result = Aga3_CalculateFlow(flowTemperatureInCelcius, pipeReferenceTemperatureInCelcius, orificeReferenceTemperatureInCelcius,
     baseTemperatureInCelcius, staticPressureKPA, baseStaticPressureKPA, differentialPressureKPA, orificeSizeMM, pipeSizeMM, orificeMaterial,
     pipeMaterial, tapIsUpstream, flowCompressibility, baseCompressibility, specificGravity);
-    
+   mb.task(); 
     if (val==0)
   {
     return result.BaseCompressibility_Zb;
