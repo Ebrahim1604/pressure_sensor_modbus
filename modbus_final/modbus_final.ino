@@ -29,144 +29,29 @@ unsigned long WaitingTime;
 //ModbusIP object
 ModbusIP mb;
 
-unsigned long samplerate = 521; // 10 min counter
+unsigned long samplerate = 5; // 10 min counter
 
 #define Meter 23456 // Meter number will change
 
-float t_sp = 0.0;
-float t_dp = 0.0;
-float t_bc = 0.0;
-float t_c = 0.0;
-float t_fc = 0.0;
-float t_sg = 0.0;
-float t_f = 0.0;
-float bc,c,fc,sg,f;
+double t_sp = 0.0;
+double t_dp = 0.0;
+double t_bc = 0.0;
+double t_c = 0.0;
+double t_fc = 0.0;
+double t_sg = 0.0;
+double t_f = 0.0;
+double bc,c,fc,sg,f;
 
 //inital values in first 10 mins:
-float f_sp = 0.0;
-float f_dp = 0.0;
-float f_bc = 0.0;
-float f_c = 0.0;
-float f_fc = 0.0;
-float f_sg = 0.0;
-float f_f = 0.0;
+double f_sp = 0.0;
+double f_dp = 0.0;
+double f_bc = 0.0;
+double f_c = 0.0;
+double f_fc = 0.0;
+double f_sg = 0.0;
+double f_f = 0.0;
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-
-  byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-  // The IP address for the shield
-  byte ip[] = { 192, 168, 7, 120 };
-  //Config Modbus IP
-  mb.config(mac, ip);
-
-  set_reg(60, 3);
-  set_reg(61, 3);
-
-  mb.addIreg(add_1);
-  mb.addIreg(add_2);
-  mb.addIreg(add_3);
-  mb.addIreg(add_4);
-  mb.addIreg(add_5);
-  mb.addIreg(add_6);
-  mb.addIreg(add_7);
-  mb.addIreg(add_8);
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  
-  update_registers();
-  calculate_parameters();
-  update_values();
-
-}
-
-void update_registers()
-{
-  mb.Ireg(add_1, f_sp);
-  mb.Ireg(add_2, f_dp);
-  mb.Ireg(add_3, f_bc);
-  mb.Ireg(add_4, f_c);
-  mb.Ireg(add_5, f_fc);
-  mb.Ireg(add_6, f_sg);
-  mb.Ireg(add_7, f_f);
-  mb.Ireg(add_8, Meter);
-}
-
-void calculate_parameters()
-{
-  for(unsigned long i = 0; i<samplerate; i++)
-  {
-    t_sp = t_sp + (float)get_static_pressure();
-    t_dp = t_dp + (float)get_diff_pressure();
-    bc,c,fc,sg,f = AGA3Calc();
-    t_bc = t_bc + bc;
-    t_c = t_c + c;
-    t_fc = t_fc + fc;
-    t_sg = t_sg + sg;
-    t_f = t_f + f;
-    mb.task();
-  }
-   
- }
- 
-void update_values()
-{
-  f_sp = t_sp/samplerate;
-  f_dp = t_dp/samplerate;
-  f_bc = t_bc/samplerate;
-  f_c = t_c/samplerate;
-  f_fc = t_fc/samplerate;
-  f_sg = t_sg/samplerate;
-  f_f = t_f/samplerate;
-
-  t_sp = 0.0;
-  t_dp = 0.0;
-  t_bc = 0.0;
-  t_c = 0.0;
-  t_fc = 0.0;
-  t_sg = 0.0;
-  t_f = 0.0;
-}
- 
-float get_diff_pressure()
-{
-  union
-    {
-        float floatVal;
-        uint16_t bytes[2];
-    }floatConverter;
-    
-    floatConverter.bytes[0]= get_reg(402); 
-    floatConverter.bytes[1]= get_reg(401);
-  
-    float fo = floatConverter.floatVal;
-  
-    return fo;
-  }
-
- 
-float get_static_pressure()
-{
-  union
-    {
-        float floatVal;
-        uint16_t bytes[2];
-    }floatConverter;
-    
-    floatConverter.bytes[0]= get_reg(404); 
-    floatConverter.bytes[1]= get_reg(403);
-  
-    float fo = floatConverter.floatVal;
-  
-   return fo;
-  }
-
-float AGA3Calc()
-{
-  // SETUP VARIABLES
+// SETUP VARIABLES
   double Helium_He_v = 0;
   double Nitrogen_N2_v = 0.0348 * 0.01;
   double CarbonDioxide_CO2_v = 2.9718 * 0.01;
@@ -190,7 +75,52 @@ float AGA3Calc()
   double baseCompressibility_v = 1.0021; // COMPRESSIBLITY FACTOR 
   double specificGravity_v = 0.5846; // REAL SPECIFIC GRAVITY FROM SHEET
   
+  double flowTemperatureInCelcius = flowTemperatureInCelcius_v;
+  double pipeReferenceTemperatureInCelcius = pipeReferenceTemperatureInCelcius_v;
+  double orificeReferenceTemperatureInCelcius = orificeReferenceTemperatureInCelcius_v;
+  double baseTemperatureInCelcius = baseTemperatureInCelcius_v; 
+  double baseStaticPressureKPA = baseStaticPressureKPA_v;
+
+  double orificeSizeMM = orificeSizeMM_v;
+  double pipeSizeMM = pipeSizeMM_v;
+  AgaConstants_MaterialType orificeMaterial = StainlessSteel;
+  AgaConstants_MaterialType pipeMaterial = CarbonSteel;
+  bool tapIsUpstream = true;
+
   double gasComps[GAS_COMPS_SIZE] = {0};
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+
+  byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+  // The IP address for the shield
+  byte ip[] = { 192, 168, 7, 120 };
+  //Config Modbus IP
+  mb.config(mac, ip);
+
+  set_reg(60, 3);
+  set_reg(61, 3);
+
+  mb.addIreg(add_1);
+  mb.addIreg(add_2);
+  mb.addIreg(add_3);
+  mb.addIreg(add_4);
+  mb.addIreg(add_5);
+  mb.addIreg(add_6);
+  mb.addIreg(add_7);
+  mb.addIreg(add_8);
+  
+  mb.Ireg(add_1, f_sp);
+  mb.Ireg(add_2, f_dp);
+  mb.Ireg(add_3, f_bc);
+  mb.Ireg(add_4, f_c);
+  mb.Ireg(add_5, f_fc);
+  mb.Ireg(add_6, f_sg);
+  mb.Ireg(add_7, f_f);
+  mb.Ireg(add_8, Meter);
+  mb.task();
+
   gasComps[Helium_He] = Helium_He_v;
   gasComps[Nitrogen_N2] = Nitrogen_N2_v;
   gasComps[CarbonDioxide_CO2] = CarbonDioxide_CO2_v;
@@ -203,20 +133,160 @@ float AGA3Calc()
   gasComps[iPentane_iC5] = iPentane_iC5_v;
   gasComps[nHexane_C6] = nHexane_C6_v;
   gasComps[nHeptane_C7] = nHeptane_C7_v;
-  
-  double flowTemperatureInCelcius = flowTemperatureInCelcius_v;
-  double pipeReferenceTemperatureInCelcius = pipeReferenceTemperatureInCelcius_v;
-  double orificeReferenceTemperatureInCelcius = orificeReferenceTemperatureInCelcius_v;
-  double baseTemperatureInCelcius = baseTemperatureInCelcius_v;
-  double staticPressureKPA = 50.01; // get_static_pressure(); <<- I am calling this to get the value, you stated I shouldn't call this in the function. 50.01 is an example to test
-  double baseStaticPressureKPA = baseStaticPressureKPA_v;
-  double differentialPressureKPA = 31.6; // get_diff_pressure(); <<- I am calling this to get the value, you stated I shouldn't call this in the function. 31.6 is an example to test
-  double orificeSizeMM = orificeSizeMM_v;
-  double pipeSizeMM = pipeSizeMM_v;
-  AgaConstants_MaterialType orificeMaterial = StainlessSteel;
-  AgaConstants_MaterialType pipeMaterial = CarbonSteel;
-  bool tapIsUpstream = true;
 
+  
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  
+  update_registers();
+  calculate_parameters();
+  update_values();
+
+}
+
+void update_registers()
+{
+  mb.Ireg(add_1, f_sp);
+  mb.Ireg(add_2, f_dp);
+  mb.Ireg(add_3, f_bc);
+  mb.Ireg(add_4, f_c);
+  mb.Ireg(add_5, f_fc);
+  mb.Ireg(add_6, f_sg);
+  mb.Ireg(add_7, f_f);
+  mb.Ireg(add_8, Meter);
+  mb.task();
+}
+
+void calculate_parameters()
+{
+  for(unsigned long i = 0; i<samplerate; i++)
+  {
+    mb.task();
+    t_sp = t_sp + get_static_pressure();
+    
+    mb.task();
+    t_dp = t_dp + get_diff_pressure();
+    mb.task();
+    Serial.print("i = ");
+    Serial.println(i);
+    Serial.print("SUmmed dp and sp values: ");
+    Serial.print(t_sp);
+    Serial.print(" ");
+    Serial.println(t_dp);
+    bc = AGA3Calc(0);
+    c = AGA3Calc(1);
+    fc = AGA3Calc(2);
+    sg = AGA3Calc(3);
+    f = AGA3Calc(4);
+    Serial.print("current returned bc,c,fc,sg and f vales: ");
+    Serial.print(bc);
+    Serial.print(" ");
+    Serial.print(c);
+    Serial.print(" ");
+    Serial.print(fc);
+    Serial.print(" ");
+    Serial.print(sg);
+    Serial.print(" ");
+    Serial.print(f);
+    Serial.println(" ");
+    mb.task();
+    t_bc = t_bc + bc;
+    t_c = t_c + c;
+    t_fc = t_fc + fc;
+    t_sg = t_sg + sg;
+    t_f = t_f + f;
+    Serial.print("current summed bc,c,fc,sg and f vales: ");
+    Serial.print(t_bc);
+    Serial.print(" ");
+    Serial.print(t_c);
+    Serial.print(" ");
+    Serial.print(t_fc);
+    Serial.print(" ");
+    Serial.print(t_sg);
+    Serial.print(" ");
+    Serial.print(t_f);
+    Serial.println(" ");
+    mb.task();
+  }
+   
+ }
+ 
+void update_values()
+{
+  f_sp = t_sp/samplerate;
+  f_dp = t_dp/samplerate;
+  f_bc = t_bc/samplerate;
+  f_c = t_c/samplerate;
+  f_fc = t_fc/samplerate;
+  f_sg = t_sg/samplerate;
+  f_f = t_f/samplerate;
+
+  Serial.print("Averaged values: ");
+  Serial.print(f_sp);
+  Serial.print(" ");
+  Serial.print(f_dp);
+  Serial.print(" ");
+  Serial.print(f_bc);
+  Serial.print(" ");
+  Serial.print(f_c);
+  Serial.print(" ");
+  Serial.print(f_fc);
+  Serial.print(" ");
+  Serial.print(f_sg);
+  Serial.print(" ");
+  Serial.print(f_f);
+  Serial.println(" ");
+  
+  t_sp = 0.0;
+  t_dp = 0.0;
+  t_bc = 0.0;
+  t_c = 0.0;
+  t_fc = 0.0;
+  t_sg = 0.0;
+  t_f = 0.0;
+  mb.task();
+}
+ 
+double get_diff_pressure()
+{
+  union
+    {
+        double doubleVal;
+        uint16_t bytes[2];
+    }doubleConverter;
+    
+    doubleConverter.bytes[0]= get_reg(402); 
+    doubleConverter.bytes[1]= get_reg(401);
+  
+    double fo = doubleConverter.doubleVal;
+  
+    return fo;
+  }
+
+ 
+double get_static_pressure()
+{
+  union
+    {
+        double doubleVal;
+        uint16_t bytes[2];
+    }doubleConverter;
+    
+    doubleConverter.bytes[0]= get_reg(404); 
+    doubleConverter.bytes[1]= get_reg(403);
+  
+    double fo = doubleConverter.doubleVal;
+  
+   return fo;
+  }
+
+double AGA3Calc(int val)
+{ 
+  double staticPressureKPA = get_static_pressure();
+  double differentialPressureKPA = get_diff_pressure();
+  
   Aga8Result calcZResult = Aga8_CalculateZ(gasComps, UnitConverter_CELCIUStoKELVIN(flowTemperatureInCelcius), 
     UnitConverter_KPAtoPSI(staticPressureKPA));
   double FlowZCalc = calcZResult.FlowCompressiblity;
@@ -229,7 +299,26 @@ float AGA3Calc()
     baseTemperatureInCelcius, staticPressureKPA, baseStaticPressureKPA, differentialPressureKPA, orificeSizeMM, pipeSizeMM, orificeMaterial,
     pipeMaterial, tapIsUpstream, flowCompressibility, baseCompressibility, specificGravity);
     
-  return (float)result.BaseCompressibility_Zb,(float)result.Compressibility_FPV,(float)result.FlowingCompressibility_Zf,(float)result.SpecificGravity,(float)result.Flow;
+    if (val==0)
+  {
+    return result.BaseCompressibility_Zb;
+  }
+  else if (val==1)
+  {
+    return result.Compressibility_FPV;
+  }
+  else if(val==2)
+  {
+    return result.FlowingCompressibility_Zf;
+  }
+  else if(val==3)
+  {
+    return result.SpecificGravity;
+  }
+  else if(val==4)
+  {
+  return result.Flow; 
+  }
 }
 
 int get_reg(uint16_t addr)
