@@ -40,6 +40,7 @@ double t_c = 0.0;
 double t_fc = 0.0;
 double t_sg = 0.0;
 double t_f = 0.0;
+double* arr_v;
 double bc,c,fc,sg,f;
 
 //inital values in first 10 mins:
@@ -168,15 +169,16 @@ void calculate_parameters()
     mb.task();
     t_dp = t_dp + get_diff_pressure();
     mb.task();
-    bc = AGA3Calc(0);
+    arr_v = AGA3Calc();
+    bc = arr_v[0];
     mb.task();
-    c = AGA3Calc(1);
+    c = arr_v[1];
     mb.task();
-    fc = AGA3Calc(2);
+    fc = arr_v[2];
     mb.task();
-    sg = AGA3Calc(3);
+    sg = arr_v[3];
     mb.task();
-    f = AGA3Calc(4);
+    f = arr_v[4];
     mb.task();
     t_bc = t_bc + bc;
     t_c = t_c + c;
@@ -242,7 +244,7 @@ double get_static_pressure()
    return fo;
   }
 
-double AGA3Calc(int val)
+double* AGA3Calc()
 { 
   double staticPressureKPA = get_static_pressure();
   mb.task();
@@ -260,26 +262,15 @@ double AGA3Calc(int val)
     baseTemperatureInCelcius, staticPressureKPA, baseStaticPressureKPA, differentialPressureKPA, orificeSizeMM, pipeSizeMM, orificeMaterial,
     pipeMaterial, tapIsUpstream, flowCompressibility, baseCompressibility, specificGravity);
    mb.task(); 
-    if (val==0)
-  {
-    return result.BaseCompressibility_Zb;
-  }
-  else if (val==1)
-  {
-    return result.Compressibility_FPV;
-  }
-  else if(val==2)
-  {
-    return result.FlowingCompressibility_Zf;
-  }
-  else if(val==3)
-  {
-    return result.SpecificGravity;
-  }
-  else if(val==4)
-  {
-  return result.Flow; 
-  }
+
+   static double arr[5];
+   arr[0] = result.BaseCompressibility_Zb;
+   arr[1] = result.Compressibility_FPV;
+   arr[2] = result.FlowingCompressibility_Zf;
+   arr[3] = result.SpecificGravity;
+   arr[4] = result.Flow;
+
+   return arr;
 }
 
 int get_reg(uint16_t addr)
