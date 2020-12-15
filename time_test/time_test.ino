@@ -18,6 +18,8 @@ const int add_6 = 30006;
 const int add_7 = 30007;
 const int add_8 = 30008;
 
+unsigned long samplerate = 10; // counter
+
 #define MasterModbusAdd  0
 #define SlaveModbusAdd  1
 #define RS485Serial 2
@@ -29,8 +31,7 @@ unsigned long WaitingTime;
 //ModbusIP object
 ModbusIP mb;
 
-unsigned long samplerate = 5; // 10 min counter
-
+//unsigned long samplerate = 5; // 10 min counter
 #define Meter 23456 // Meter number will change
 
 double t_sp = 0.0;
@@ -40,6 +41,7 @@ double t_c = 0.0;
 double t_fc = 0.0;
 double t_sg = 0.0;
 double t_f = 0.0;
+double* arr_v;
 double bc,c,fc,sg,f;
 
 //inital values in first 10 mins:
@@ -91,7 +93,7 @@ double f_f = 0.0;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
   // The IP address for the shield
@@ -119,7 +121,7 @@ void setup() {
   mb.Ireg(add_6, f_sg);
   mb.Ireg(add_7, f_f);
   mb.Ireg(add_8, Meter);
-  mb.task();
+  
 
   gasComps[Helium_He] = Helium_He_v;
   gasComps[Nitrogen_N2] = Nitrogen_N2_v;
@@ -134,35 +136,35 @@ void setup() {
   gasComps[nHexane_C6] = nHexane_C6_v;
   gasComps[nHeptane_C7] = nHeptane_C7_v;
 
-  Serial.println("wait for sometime");
-  int time_test = 1000;
+Serial.println("wait for sometime");
+  int time_test = 10;
   unsigned long time_start = micros();
   for(int i = 0; i<time_test; i++)
   {
-    mb.task();
+    mb.task(); // Keep
     t_sp = t_sp + get_static_pressure();
-    mb.task();
+    mb.task(); // Keep
     t_dp = t_dp + get_diff_pressure();
+    mb.task(); // Keep
+    arr_v = AGA3Calc();
+    bc = arr_v[0];
     mb.task();
-    bc = AGA3Calc(0);
+    c = arr_v[1];
     mb.task();
-    c = AGA3Calc(1);
+    fc = arr_v[2];
     mb.task();
-    fc = AGA3Calc(2);
+    sg = arr_v[3];
     mb.task();
-    sg = AGA3Calc(3);
-    mb.task();
-    f = AGA3Calc(4);
+    f = arr_v[4];
     mb.task();
     t_bc = t_bc + bc;
     t_c = t_c + c;
     t_fc = t_fc + fc;
     t_sg = t_sg + sg;
     t_f = t_f + f;
-    mb.task();
+    //mb.task();
   }
-
-  unsigned long time_end = micros();
+ unsigned long time_end = micros();
   double dur = time_end-time_start;
   Serial.print("Time = ");
   Serial.println(dur/time_test);
@@ -188,38 +190,9 @@ void update_registers()
   mb.Ireg(add_6, f_sg);
   mb.Ireg(add_7, f_f);
   mb.Ireg(add_8, Meter);
-  mb.task();
+  //mb.task();
 }
 
-void calculate_parameters()
-{
-  for(unsigned long i = 0; i<samplerate; i++)
-  {
-    mb.task();
-    t_sp = t_sp + get_static_pressure();
-    mb.task();
-    t_dp = t_dp + get_diff_pressure();
-    mb.task();
-    bc = AGA3Calc(0);
-    mb.task();
-    c = AGA3Calc(1);
-    mb.task();
-    fc = AGA3Calc(2);
-    mb.task();
-    sg = AGA3Calc(3);
-    mb.task();
-    f = AGA3Calc(4);
-    mb.task();
-    t_bc = t_bc + bc;
-    t_c = t_c + c;
-    t_fc = t_fc + fc;
-    t_sg = t_sg + sg;
-    t_f = t_f + f;
-    mb.task();
-  }
-   
- }
- 
 void update_values()
 {
   f_sp = t_sp/samplerate;
@@ -238,7 +211,7 @@ void update_values()
   t_fc = 0.0;
   t_sg = 0.0;
   t_f = 0.0;
-  mb.task();
+  //mb.task();
 }
  
 double get_diff_pressure()
@@ -274,44 +247,34 @@ double get_static_pressure()
    return fo;
   }
 
-double AGA3Calc(int val)
+double* AGA3Calc()
 { 
   double staticPressureKPA = get_static_pressure();
-  mb.task();
+  //mb.task();
   double differentialPressureKPA = get_diff_pressure();
-  mb.task();
+  //mb.task();
   Aga8Result calcZResult = Aga8_CalculateZ(gasComps, UnitConverter_CELCIUStoKELVIN(flowTemperatureInCelcius), 
     UnitConverter_KPAtoPSI(staticPressureKPA));
   double FlowZCalc = calcZResult.FlowCompressiblity;
-  mb.task();
+  //mb.task();
   double flowCompressibility = FlowZCalc;
   double baseCompressibility = baseCompressibility_v;
   double specificGravity = specificGravity_v;
-  mb.task();
+  //mb.task();
   Aga3Result result = Aga3_CalculateFlow(flowTemperatureInCelcius, pipeReferenceTemperatureInCelcius, orificeReferenceTemperatureInCelcius,
     baseTemperatureInCelcius, staticPressureKPA, baseStaticPressureKPA, differentialPressureKPA, orificeSizeMM, pipeSizeMM, orificeMaterial,
     pipeMaterial, tapIsUpstream, flowCompressibility, baseCompressibility, specificGravity);
-   mb.task(); 
-    if (val==0)
-  {
-    return result.BaseCompressibility_Zb;
-  }
-  else if (val==1)
-  {
-    return result.Compressibility_FPV;
-  }
-  else if(val==2)
-  {
-    return result.FlowingCompressibility_Zf;
-  }
-  else if(val==3)
-  {
-    return result.SpecificGravity;
-  }
-  else if(val==4)
-  {
-  return result.Flow; 
-  }
+   //mb.task(); 
+
+   static double arr[5];
+   arr[0] = result.BaseCompressibility_Zb;
+   arr[1] = result.Compressibility_FPV;
+   arr[2] = result.FlowingCompressibility_Zf;
+   arr[3] = result.SpecificGravity;
+   arr[4] = result.Flow;
+  Serial.println("math");
+
+   return arr;
 }
 
 int get_reg(uint16_t addr)
@@ -324,7 +287,7 @@ int get_reg(uint16_t addr)
   ModbusQuery[0].u16CoilsNo = 1;
   ModbusQuery[0].au16reg = curr_reg_val;
 
-  ControllinoModbusMaster.begin( 9600 );
+  ControllinoModbusMaster.begin( 57600 );
   ControllinoModbusMaster.setTimeOut( 5000 );
 
   WaitingTime = millis() + 1000;
@@ -358,7 +321,7 @@ void set_reg(uint16_t addr, int reg_val)
   ModbusQuery[1].au16reg = req_reg_val;
   req_reg_val[0] = reg_val;
 
-  ControllinoModbusMaster.begin( 9600 );
+  ControllinoModbusMaster.begin( 57600 );
   ControllinoModbusMaster.setTimeOut( 5000 );
 
   WaitingTime = millis() + 1000;
@@ -372,7 +335,6 @@ again2:
   if (ControllinoModbusMaster.getState() == COM_IDLE)
   {
     Serial2.end();
-    //Serial.println("Speed changed!");
     return;
   }
   else
