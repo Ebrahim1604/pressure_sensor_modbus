@@ -53,6 +53,8 @@ double f_fc = 0.0;
 double f_sg = 0.0;
 double f_f = 0.0;
 
+double a,b;
+
 // SETUP VARIABLES
   double Helium_He_v = 0;
   double Nitrogen_N2_v = 0.0348 * 0.01;
@@ -142,11 +144,13 @@ Serial.println("wait for sometime");
   for(int i = 0; i<time_test; i++)
   {
     mb.task(); // Keep
-    t_sp = t_sp + get_static_pressure();
+    a = get_static_pressure();
+    b = get_diff_pressure();
+    t_sp = t_sp + a;
     mb.task(); // Keep
-    t_dp = t_dp + get_diff_pressure();
+    t_dp = t_dp + b;
     mb.task(); // Keep
-    arr_v = AGA3Calc();
+    arr_v = AGA3Calc(a,b);
     bc = arr_v[0];
     mb.task();
     c = arr_v[1];
@@ -247,11 +251,11 @@ double get_static_pressure()
    return fo;
   }
 
-double* AGA3Calc()
+double* AGA3Calc(double a, double b)
 { 
-  double staticPressureKPA = get_static_pressure();
+  double staticPressureKPA = a;
   //mb.task();
-  double differentialPressureKPA = get_diff_pressure();
+  double differentialPressureKPA = b;
   //mb.task();
   Aga8Result calcZResult = Aga8_CalculateZ(gasComps, UnitConverter_CELCIUStoKELVIN(flowTemperatureInCelcius), 
     UnitConverter_KPAtoPSI(staticPressureKPA));
