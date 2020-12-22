@@ -29,7 +29,7 @@ unsigned long WaitingTime;
 //ModbusIP object
 ModbusIP mb;
 
-unsigned long samplerate = 5; // 10 min counter
+unsigned long samplerate = 1017; // 10 min counter, 1 cycle = 0.59 secs, so 600 secs = 1017 * 0.59 
 
 #define Meter 23456 // Meter number will change
 
@@ -42,6 +42,8 @@ double t_sg = 0.0;
 double t_f = 0.0;
 double* arr_v;
 double bc,c,fc,sg,f;
+
+double a,b;
 
 //inital values in first 10 mins:
 double f_sp = 0.0;
@@ -164,12 +166,14 @@ void calculate_parameters()
 {
   for(unsigned long i = 0; i<samplerate; i++)
   {
-    mb.task();
-    t_sp = t_sp + get_static_pressure();
-    mb.task();
-    t_dp = t_dp + get_diff_pressure();
-    mb.task();
-    arr_v = AGA3Calc();
+    mb.task(); // Keep
+    a = get_static_pressure();
+    b = get_diff_pressure();
+    t_sp = t_sp + a;
+    mb.task(); // Keep
+    t_dp = t_dp + b;
+    mb.task(); // Keep
+    arr_v = AGA3Calc(a,b);
     bc = arr_v[0];
     mb.task();
     c = arr_v[1];
@@ -185,7 +189,7 @@ void calculate_parameters()
     t_fc = t_fc + fc;
     t_sg = t_sg + sg;
     t_f = t_f + f;
-    mb.task();
+    //mb.task();
   }
    
  }
@@ -244,24 +248,24 @@ double get_static_pressure()
    return fo;
   }
 
-double* AGA3Calc()
+double* AGA3Calc(double a, double b)
 { 
-  double staticPressureKPA = get_static_pressure();
-  mb.task();
-  double differentialPressureKPA = get_diff_pressure();
-  mb.task();
+  double staticPressureKPA = a;
+  //mb.task();
+  double differentialPressureKPA = b;
+  //mb.task();
   Aga8Result calcZResult = Aga8_CalculateZ(gasComps, UnitConverter_CELCIUStoKELVIN(flowTemperatureInCelcius), 
     UnitConverter_KPAtoPSI(staticPressureKPA));
   double FlowZCalc = calcZResult.FlowCompressiblity;
-  mb.task();
+  //mb.task();
   double flowCompressibility = FlowZCalc;
   double baseCompressibility = baseCompressibility_v;
   double specificGravity = specificGravity_v;
-  mb.task();
+  //mb.task();
   Aga3Result result = Aga3_CalculateFlow(flowTemperatureInCelcius, pipeReferenceTemperatureInCelcius, orificeReferenceTemperatureInCelcius,
     baseTemperatureInCelcius, staticPressureKPA, baseStaticPressureKPA, differentialPressureKPA, orificeSizeMM, pipeSizeMM, orificeMaterial,
     pipeMaterial, tapIsUpstream, flowCompressibility, baseCompressibility, specificGravity);
-   mb.task(); 
+   //mb.task(); 
 
    static double arr[5];
    arr[0] = result.BaseCompressibility_Zb;
@@ -269,6 +273,7 @@ double* AGA3Calc()
    arr[2] = result.FlowingCompressibility_Zf;
    arr[3] = result.SpecificGravity;
    arr[4] = result.Flow;
+  //Serial.println("math");
 
    return arr;
 }
